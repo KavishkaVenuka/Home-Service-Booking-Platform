@@ -1,0 +1,87 @@
+version: '3.9'
+
+# ─── Named Volumes ────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+
+# ─── Custom Network ───────────────────────────────────────────────────────────
+networks:
+  homeserve_net:
+    driver: bridge
+
+# ─── Services ─────────────────────────────────────────────────────────────────
+services:
+
+  # ── PostgreSQL Database ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: homeserve_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-home_service_db}
+      POSTGRES_USER:     ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # Expose for local DB tools (e.g., pgAdmin, TablePlus)
+    networks:
+      - homeserve_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-home_service_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Node.js Backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development        # Use dev stage with nodemon
+    container_name: homeserve_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy   # Wait for DB to be ready
+    environment:
+      NODE_ENV:    development
+      PORT:        5000
+      DB_HOST:     postgres          # Resolves to the postgres service
+      DB_PORT:     5432
+      DB_NAME:     ${DB_NAME:-home_service_db}
+      DB_USER:     ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres_dev_password}
+      JWT_SECRET:  ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      JWT_EXPIRES_IN: 7d
+      CLIENT_URL:  http://localhost:3000
+    volumes:
+      - ./backend:/app             # Hot-reload: mount source into container
+      - /app/node_modules          # Prevent host node_modules from overwriting
+    ports:
+      - "5000:5000"
+    networks:
+      - homeserve_net
+
+  # ── React Frontend ────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: build               # Build stage only (serves via Vite below)
+    container_name: homeserve_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - homeserve_net
+    # Override CMD to use Vite dev server instead of Nginx for development
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
