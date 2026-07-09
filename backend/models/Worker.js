@@ -112,4 +112,20 @@ const refreshWorkerRating = async (worker_id) => {
   return rows[0];
 };
 
-module.exports = { createWorker, getAllWorkers, getWorkerById, updateWorker, refreshWorkerRating };
+/**
+ * Get a worker profile by the linked user ID.
+ * Used to resolve req.user.id → worker profile in protected routes.
+ * @param {string} user_id
+ */
+const getWorkerByUserId = async (user_id) => {
+  const sql = `
+    SELECT w.*, u.name, u.email, u.avatar_url, u.phone
+    FROM workers w
+    JOIN users u ON w.user_id = u.id
+    WHERE w.user_id = $1
+  `;
+  const { rows } = await query(sql, [user_id]);
+  return rows[0] || null;
+};
+
+module.exports = { createWorker, getAllWorkers, getWorkerById, getWorkerByUserId, updateWorker, refreshWorkerRating };
