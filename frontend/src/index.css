@@ -302,8 +302,8 @@ body {
   position: absolute;
   top: 50%;
   left: 43%;
-  transform: translate(-42%, -50%);
-  width: 80%;
+  transform: translate(-46%, -60%);
+  width: 100%;
   max-width: 100%;
   height: 120px;
   user-select: none;
