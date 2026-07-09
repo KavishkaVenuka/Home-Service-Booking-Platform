@@ -1,135 +1,247 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import heroWorker from '../assets/hero_workers.png';
+import TextPressure from '../components/TextPressure';
 
 const SERVICES = [
-  { icon: '🔧', label: 'Plumbing'    },
-  { icon: '⚡', label: 'Electrical'  },
-  { icon: '🧹', label: 'Cleaning'    },
-  { icon: '🪚', label: 'Carpentry'   },
-  { icon: '🎨', label: 'Painting'    },
-  { icon: '🌿', label: 'Gardening'   },
-  { icon: '❄️', label: 'HVAC'        },
-  { icon: '🔒', label: 'Security'    },
+  { icon: '🔧', label: 'Plumbing'   },
+  { icon: '⚡', label: 'Electrical' },
+  { icon: '🧹', label: 'Cleaning'   },
+  { icon: '🪚', label: 'Carpentry'  },
+  { icon: '🎨', label: 'Painting'   },
+  { icon: '🌿', label: 'Gardening'  },
+  { icon: '❄️', label: 'HVAC'       },
+  { icon: '🔒', label: 'Security'   },
 ];
 
 const STATS = [
-  { value: '500+', label: 'Verified Pros'     },
-  { value: '12k+', label: 'Jobs Completed'    },
-  { value: '4.9★', label: 'Average Rating'    },
-  { value: '24/7', label: 'Support Available' },
+  { value: '500+', label: 'Verified Pros'    },
+  { value: '12k+', label: 'Jobs Done'        },
+  { value: '4.9★', label: 'Avg Rating'       },
+  { value: '24/7', label: 'Support'          },
+];
+
+const HOW_STEPS = [
+  { step: '01', icon: '🔍', title: 'Browse Profiles',  desc: 'Filter by service, rating, and availability across hundreds of verified pros.' },
+  { step: '02', icon: '📅', title: 'Book Instantly',   desc: 'Pick your date and time, get a transparent price estimate — no surprises.' },
+  { step: '03', icon: '⭐', title: 'Rate & Review',    desc: 'After the job, leave a rating to help others find the best pros.' },
 ];
 
 export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const heroRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div className="relative overflow-hidden">
-      {/* ── Background orbs ── */}
-      <div className="orb w-[500px] h-[500px] bg-blue-600/20 top-[-120px] left-[-150px]" />
-      <div className="orb w-[400px] h-[400px] bg-violet-600/15 top-[60px] right-[-100px]" style={{ animationDelay: '2s' }} />
-      <div className="orb w-[300px] h-[300px] bg-emerald-600/10 top-[400px] left-[30%]" style={{ animationDelay: '4s' }} />
+    <div className="lp-root">
 
-      {/* ════ HERO ════ */}
-      <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 py-24">
-        <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-1.5 text-xs text-blue-300 font-medium mb-8 tracking-wide uppercase">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Trusted Home Services Platform
+      {/* NAVBAR */}
+      <header className={`lp-nav ${scrolled ? 'lp-nav--scrolled' : ''}`}>
+        <div className="lp-nav__inner">
+          <Link to="/" className="lp-logo">
+            <span className="lp-logo__icon">⚡</span>
+            <span className="lp-logo__text">Work<span className="lp-logo__accent">Hire</span></span>
+          </Link>
+
+          <nav className="lp-nav__links">
+            {['Home', 'Workers', 'Services', 'About', 'Contact'].map((l) => (
+              <Link
+                key={l}
+                to={l === 'Home' ? '/' : `/${l.toLowerCase()}`}
+                className="lp-nav__link"
+              >
+                {l}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="lp-nav__right">
+            <span className="lp-nav__location">
+              <span className="lp-location-dot" />
+              Your City
+            </span>
+            <button className="lp-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+              <span className="lp-menu-icon">≡</span> MENU
+            </button>
+          </div>
         </div>
 
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08] text-white max-w-4xl">
-          Find the&nbsp;
-          <span className="gradient-text">Perfect Pro</span>
-          <br />for Every Job
-        </h1>
+        {menuOpen && (
+          <div className="lp-mobile-menu">
+            {['/', '/workers', '/bookings', '/login', '/register'].map((path, i) => (
+              <Link
+                key={path}
+                to={path}
+                className="lp-mobile-link"
+                onClick={() => setMenuOpen(false)}
+              >
+                {['Home', 'Workers', 'My Bookings', 'Log In', 'Sign Up'][i]}
+              </Link>
+            ))}
+          </div>
+        )}
+      </header>
 
-        <p className="mt-6 text-slate-400 text-lg sm:text-xl max-w-2xl leading-relaxed">
-          Book verified, background-checked home service professionals in minutes.
-          Plumbing, electrical, cleaning, and more — all at transparent rates.
-        </p>
-
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link to="/workers" id="hero-browse-workers" className="btn-primary px-8 py-3 text-base no-underline">
-            Browse Workers →
-          </Link>
-          <Link to="/register" className="glass glass-hover rounded-lg px-8 py-3 text-white font-semibold text-base no-underline transition-all">
-            Join as a Pro
-          </Link>
+      {/* HERO */}
+      <section className="lp-hero" ref={heroRef}>
+        <div className="lp-bg-text" aria-hidden="true">
+          <TextPressure
+            text="WORKHIRE"
+            flex={false}
+            alpha={false}
+            stroke={false}
+            width={false}
+            weight={true}
+            italic={true}
+            textColor="rgba(0, 0, 0, 0.055)"
+            minFontSize={30}
+            fontFamily="Outfit"
+          />
         </div>
 
-        {/* Stats */}
-        <div className="mt-20 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl w-full">
-          {STATS.map(({ value, label }) => (
-            <div key={label} className="glass rounded-xl py-5 px-4">
-              <p className="text-white text-2xl font-bold gradient-text">{value}</p>
-              <p className="text-slate-400 text-sm mt-1">{label}</p>
+        <div className="lp-hero__content">
+          <div className="lp-eyebrow">
+            <span className="lp-eyebrow__dot" />
+            Home Service Platform
+          </div>
+
+          <h1 className="lp-hero__title">
+            <span className="lp-hero__title-nowrap">Find workers that feel</span><br />
+            <span className="lp-hero__accent lp-hero__title-nowrap">impossible to replace.</span>
+          </h1>
+
+          <p className="lp-hero__sub">
+            Verified, background-checked professionals for every home service.<br />
+            Plumbing, electrical, cleaning and more — booked in minutes.
+          </p>
+
+          <div className="lp-cta-row">
+            <Link to="/workers" id="hero-browse-workers" className="lp-btn lp-btn--dark">
+              Browse Workers <span className="lp-btn__arrow">↗</span>
+            </Link>
+            <Link to="/register" className="lp-btn lp-btn--outline">
+              Join as a Pro <span className="lp-btn__dot" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="lp-hero__img-wrap">
+          <img src={heroWorker} alt="Professional home service worker" className="lp-hero__img" />
+          <div className="lp-hero__img-glow" />
+        </div>
+
+        <div className="lp-stats-bar">
+          {STATS.map(({ value, label }, i) => (
+            <div key={label} className="lp-stat">
+              {i > 0 && <span className="lp-stat__sep" aria-hidden="true">•</span>}
+              <span className="lp-stat__accent" />
+              <strong>{value}</strong>&nbsp;<span>{label}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ════ HOW IT WORKS ════ */}
-      <section className="relative py-24 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest mb-3">Simple Process</p>
-          <h2 className="section-title">How HomeServe Works</h2>
-          <p className="section-sub max-w-xl mx-auto">From browse to booked in under 3 minutes.</p>
+      {/* MARQUEE TICKER */}
+      <div className="lp-ticker" aria-hidden="true">
+        <div className="lp-ticker__track">
+          {[...SERVICES, ...SERVICES].map(({ icon, label }, i) => (
+            <span key={i} className="lp-ticker__item">
+              {icon} {label} <span className="lp-ticker__sep">◆</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
-          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { step: '01', icon: '🔍', title: 'Browse Profiles',  desc: 'Explore skilled professionals filtered by service category, rating, and availability.' },
-              { step: '02', icon: '📅', title: 'Book Instantly',   desc: 'Pick your date, time, and address. Get a price estimate before you confirm.' },
-              { step: '03', icon: '⭐', title: 'Rate & Review',    desc: 'After the job, leave a rating to help others find the best pros on the platform.' },
-            ].map(({ step, icon, title, desc }) => (
-              <div key={step} className="glass glass-hover rounded-2xl p-8 text-left relative overflow-hidden">
-                <span className="absolute top-4 right-5 text-5xl font-black text-white/5 select-none">{step}</span>
-                <div className="text-4xl mb-4">{icon}</div>
-                <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
+      {/* HOW IT WORKS */}
+      <section className="lp-section lp-how">
+        <div className="lp-section__inner">
+          <p className="lp-overline">Simple Process</p>
+          <h2 className="lp-section__title">How WorkHire Works</h2>
+          <p className="lp-section__sub">From browse to booked in under 3 minutes.</p>
+
+          <div className="lp-steps">
+            {HOW_STEPS.map(({ step, icon, title, desc }) => (
+              <div key={step} className="lp-step-card">
+                <span className="lp-step-num">{step}</span>
+                <div className="lp-step-icon">{icon}</div>
+                <h3 className="lp-step-title">{title}</h3>
+                <p className="lp-step-desc">{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ════ SERVICE CATEGORIES ════ */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-violet-400 text-sm font-semibold uppercase tracking-widest mb-3">Categories</p>
-          <h2 className="section-title">Every Service You Need</h2>
+      {/* CATEGORIES */}
+      <section className="lp-section lp-categories">
+        <div className="lp-section__inner">
+          <p className="lp-overline lp-overline--amber">Categories</p>
+          <h2 className="lp-section__title">Every Service You Need</h2>
 
-          <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="lp-cat-grid">
             {SERVICES.map(({ icon, label }) => (
               <Link
                 key={label}
                 to={`/workers?category=${label}`}
                 id={`category-${label.toLowerCase()}`}
-                className="glass glass-hover rounded-xl py-6 flex flex-col items-center gap-3 no-underline"
+                className="lp-cat-card"
               >
-                <span className="text-3xl">{icon}</span>
-                <span className="text-slate-200 text-sm font-medium">{label}</span>
+                <span className="lp-cat-icon">{icon}</span>
+                <span className="lp-cat-label">{label}</span>
+                <span className="lp-cat-arrow">→</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ════ CTA BANNER ════ */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative glass rounded-3xl px-10 py-14 text-center overflow-hidden">
-            <div className="orb w-64 h-64 bg-blue-600/25 top-[-40px] left-[-60px]" />
-            <div className="orb w-48 h-48 bg-violet-600/20 bottom-[-30px] right-[-40px]" style={{ animationDelay: '3s' }} />
-            <div className="relative">
-              <h2 className="section-title text-white text-3xl">Ready to get started?</h2>
-              <p className="text-slate-400 mt-3 mb-8">Create your account and book your first service in minutes.</p>
-              <Link to="/register" className="btn-primary px-10 py-3 text-base no-underline">
-                Get Started Free →
+      {/* CTA BANNER */}
+      <section className="lp-section">
+        <div className="lp-section__inner">
+          <div className="lp-cta-banner">
+            <div className="lp-cta-banner__bg-text" aria-hidden="true">READY</div>
+            <p className="lp-overline lp-overline--amber">Get Started</p>
+            <h2 className="lp-cta-banner__title">
+              Ready to book your<br />
+              <span className="lp-cta-banner__accent">first service?</span>
+            </h2>
+            <p className="lp-cta-banner__sub">
+              Create your free account and connect with verified professionals today.
+            </p>
+            <div className="lp-cta-row lp-cta-row--center">
+              <Link to="/register" className="lp-btn lp-btn--amber">
+                Get Started Free <span className="lp-btn__arrow">↗</span>
+              </Link>
+              <Link to="/workers" className="lp-btn lp-btn--ghost">
+                Explore Workers
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/8 py-8 text-center text-slate-500 text-sm">
-        © {new Date().getFullYear()} HomeServe. Built with React + Node.js.
+      {/* FOOTER */}
+      <footer className="lp-footer">
+        <div className="lp-footer__inner">
+          <div className="lp-footer__brand">
+            <span className="lp-logo__icon">⚡</span>
+            <span className="lp-logo__text">Work<span className="lp-logo__accent">Hire</span></span>
+          </div>
+          <p className="lp-footer__copy">
+            © {new Date().getFullYear()} WorkHire. Connecting homes with trusted pros.
+          </p>
+          <div className="lp-footer__links">
+            <Link to="/workers" className="lp-footer__link">Workers</Link>
+            <Link to="/register" className="lp-footer__link">Sign Up</Link>
+            <Link to="/login" className="lp-footer__link">Log In</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
