@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import heroWorker from '../assets/hero_workers.png';
@@ -29,13 +29,33 @@ const HOW_STEPS = [
 ];
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   const heroRef = useRef(null);
   const imgRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  const handleLogout = () => {
+    setDropdownOpen(false);
+    logout();
+    navigate('/');
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -84,10 +104,93 @@ export default function LandingPage() {
 
           <div className="lp-nav__right">
             {user ? (
-              <span className="lp-nav__location">
-                <span className="lp-location-dot" />
-                <span style={{ fontWeight: 600, color: '#111' }}>{user.name?.split(' ')[0]}</span>
-              </span>
+              <div className="relative" ref={dropdownRef} style={{ position: 'relative' }}>
+                {/* Clickable username button */}
+                <button
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 12px', borderRadius: '10px', border: 'none',
+                    background: dropdownOpen ? 'rgba(0,0,0,0.08)' : 'transparent',
+                    cursor: 'pointer', transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.07)'}
+                  onMouseLeave={e => e.currentTarget.style.background = dropdownOpen ? 'rgba(0,0,0,0.08)' : 'transparent'}
+                >
+                  <span style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontWeight: 700, fontSize: '14px', flexShrink: 0,
+                  }}>
+                    {user.name?.charAt(0).toUpperCase()}
+                  </span>
+                  <span style={{ fontWeight: 600, color: '#111', fontSize: '14px' }}>
+                    {user.name?.split(' ')[0]}
+                  </span>
+                  <svg
+                    style={{
+                      width: '14px', height: '14px', color: '#888',
+                      transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                    }}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown */}
+                {dropdownOpen && (
+                  <div style={{
+                    position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                    width: '200px', borderRadius: '14px',
+                    background: '#fff', border: '1px solid rgba(0,0,0,0.1)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.14)', overflow: 'hidden', zIndex: 999,
+                  }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                      <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>Signed in as</p>
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#111' }}>{user.name}</p>
+                    </div>
+
+                    <Link
+                      to={user.role === 'worker' ? '/worker/dashboard' : '/dashboard'}
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 16px', fontSize: '13px', color: '#333',
+                        textDecoration: 'none', transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f5f5f7'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <svg style={{ width: '15px', height: '15px', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                      Dashboard
+                    </Link>
+
+                    <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                      <button
+                        onClick={handleLogout}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          width: '100%', padding: '10px 16px', fontSize: '13px',
+                          color: '#e53e3e', background: 'none', border: 'none',
+                          cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#fff5f5'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <svg style={{ width: '15px', height: '15px', flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : null}
             <button className="lp-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
               <span className="lp-menu-icon">≡</span> MENU

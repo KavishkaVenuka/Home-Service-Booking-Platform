@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   fetchMyWorkerProfile,
   updateMyWorkerProfile,
+  createWorkerProfile,
   fetchWorkerJobBookings,
   updateBookingStatus,
 } from '../api';
@@ -103,16 +104,18 @@ const inputStyle = {
 
 /* ─── Main Dashboard ───────────────────────────────────────────────────── */
 export default function WorkerDashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect non-workers
+  // Redirect only after auth state has been resolved (avoids flash-redirect on refresh)
   useEffect(() => {
-    if (user && user.role !== 'worker') navigate('/workers');
+    if (authLoading) return;
     if (!user) navigate('/login');
-  }, [user, navigate]);
+    else if (user.role !== 'worker') navigate('/workers');
+  }, [user, authLoading, navigate]);
 
   const [profile, setProfile] = useState(null);
+  const [profileExists, setProfileExists] = useState(false); // false = no DB row yet
   const [bookings, setBookings] = useState([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -135,6 +138,7 @@ export default function WorkerDashboard() {
       .then(({ data }) => {
         const w = data.worker;
         setProfile(w);
+        setProfileExists(true);
         setForm({
           name:             w.name             || '',
           phone:            w.phone            || '',
@@ -147,7 +151,15 @@ export default function WorkerDashboard() {
           is_available:     w.is_available     ?? true,
         });
       })
-      .catch(() => setSaveMsg({ type: 'error', text: 'Could not load your profile.' }))
+      .catch((err) => {
+        // 404 = no worker profile created yet — show blank form, allow creating
+        if (err.response?.status === 404) {
+          setProfileExists(false);
+          setForm(f => ({ ...f, name: user.name || '', phone: user.phone || '' }));
+        } else {
+          setSaveMsg({ type: 'error', text: 'Could not load your profile.' });
+        }
+      })
       .finally(() => setLoadingProfile(false));
   }, [user]);
 
@@ -168,7 +180,10 @@ export default function WorkerDashboard() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!form.service_category) {
+      setSaveMsg({ type: 'error', text: 'Please select a service category before saving.' });
+      return;
+    }
     setSaving(true);
     setSaveMsg(null);
     try {
@@ -183,21 +198,35 @@ export default function WorkerDashboard() {
         location: form.location,
         is_available: form.is_available,
       };
-      const { data } = await updateMyWorkerProfile(profile.id, payload);
-      setProfile(prev => ({ ...prev, ...data.worker }));
-      setSaveMsg({ type: 'success', text: 'Profile saved successfully!' });
+
+      let updatedWorker;
+      if (!profileExists) {
+        // First time — create the worker row
+        const { data } = await createWorkerProfile(payload);
+        updatedWorker = data.worker;
+        setProfileExists(true);
+      } else {
+        const { data } = await updateMyWorkerProfile(profile.id, payload);
+        updatedWorker = data.worker;
+      }
+
+      setProfile(prev => ({ ...(prev || {}), ...updatedWorker }));
+      setSaveMsg({
+        type: 'success',
+        text: profileExists ? 'Profile saved! Your listing is live on the Workers page.' : 'Profile created! You are now visible on the Workers page.',
+      });
     } catch (err) {
       setSaveMsg({ type: 'error', text: err.response?.data?.message || 'Save failed. Try again.' });
     } finally {
       setSaving(false);
-      setTimeout(() => setSaveMsg(null), 4000);
+      setTimeout(() => setSaveMsg(null), 6000);
     }
   };
 
   const handleToggleAvailability = async () => {
-    if (!profile) return;
     const newVal = !form.is_available;
     setForm(f => ({ ...f, is_available: newVal }));
+    if (!profileExists || !profile) return; // no remote call until profile is created
     try {
       await updateMyWorkerProfile(profile.id, {
         name: form.name, phone: form.phone, avatar_url: form.avatar_url,
@@ -223,7 +252,12 @@ export default function WorkerDashboard() {
 
   const handleLogout = () => { logout(); navigate('/'); };
 
-  if (!user) return null;
+  if (authLoading || !user) return (
+    <div style={{ minHeight: '100vh', background: '#f2f0eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={40} color="#f97316" style={{ animation: 'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   return (
     <div style={{
@@ -347,17 +381,40 @@ export default function WorkerDashboard() {
                   </div>
                 </div>
 
+                {/* No profile yet — first-time prompt */}
+                {!profileExists && !loadingProfile && (
+                  <div style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20,
+                    padding: '14px 18px', borderRadius: 12, fontSize: 13, fontWeight: 500,
+                    background: 'rgba(59,130,246,0.08)', color: '#2563eb',
+                    border: '1px solid rgba(59,130,246,0.25)',
+                  }}>
+                    <span style={{ fontSize: 22 }}>👋</span>
+                    <div>
+                      <strong style={{ display: 'block', marginBottom: 2 }}>Set up your public profile</strong>
+                      Fill in your details below and click <em>Save Profile</em> to go live on the Workers page. Customers will be able to find and book you.
+                    </div>
+                  </div>
+                )}
+
                 {/* Save feedback */}
                 {saveMsg && (
                   <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 20,
                     padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
                     background: saveMsg.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                     color: saveMsg.type === 'success' ? '#059669' : '#dc2626',
                     border: `1px solid ${saveMsg.type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
                   }}>
-                    {saveMsg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-                    {saveMsg.text}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {saveMsg.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                      {saveMsg.text}
+                    </span>
+                    {saveMsg.type === 'success' && (
+                      <Link to="/workers" style={{ fontSize: 12, fontWeight: 700, color: '#059669', textDecoration: 'underline', whiteSpace: 'nowrap' }}>
+                        View on Workers Page →
+                      </Link>
+                    )}
                   </div>
                 )}
 

@@ -1,16 +1,19 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Navbar       from './components/Navbar';
-import LandingPage  from './pages/LandingPage';
-import WorkersPage  from './pages/WorkersPage';
-import BookingPage  from './pages/BookingPage';
-import BookingsPage from './pages/BookingsPage';
+import Navbar          from './components/Navbar';
+import LandingPage     from './pages/LandingPage';
+import WorkersPage     from './pages/WorkersPage';
+import BookingPage     from './pages/BookingPage';
+import BookingsPage    from './pages/BookingsPage';
 import AuthPage        from './pages/AuthPage';
 import WorkerDashboard from './pages/WorkerDashboard';
+import ServicesPage    from './pages/ServicesPage';
+import AboutPage       from './pages/AboutPage';
+import ContactPage     from './pages/ContactPage';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const hideNavbar = pathname === '/' || pathname === '/login' || pathname === '/register' || pathname === '/worker/dashboard';
+  const hideNavbar = ['/', '/login', '/register', '/worker/dashboard', '/services', '/about', '/contact', '/workers'].includes(pathname);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -18,13 +21,16 @@ function AppShell() {
       {!hideNavbar && <Navbar />}
       <main className="flex-1">
         <Routes>
-          <Route path="/"          element={<LandingPage  />} />
-          <Route path="/workers"   element={<WorkersPage  />} />
-          <Route path="/book/:workerId" element={<BookingPage />} />
-          <Route path="/bookings"  element={<BookingsPage />} />
-          <Route path="/login"            element={<AuthPage mode="login"    />} />
-          <Route path="/register"         element={<AuthPage mode="register" />} />
+          <Route path="/"               element={<LandingPage  />} />
+          <Route path="/workers"         element={<WorkersPage  />} />
+          <Route path="/book/:workerId"  element={<BookingPage  />} />
+          <Route path="/bookings"        element={<BookingsPage />} />
+          <Route path="/login"           element={<AuthPage mode="login"    />} />
+          <Route path="/register"        element={<AuthPage mode="register" />} />
           <Route path="/worker/dashboard" element={<WorkerDashboard />} />
+          <Route path="/services"        element={<ServicesPage />} />
+          <Route path="/about"           element={<AboutPage    />} />
+          <Route path="/contact"         element={<ContactPage  />} />
           {/* 404 */}
           <Route path="*" element={
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">

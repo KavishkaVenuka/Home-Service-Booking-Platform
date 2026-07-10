@@ -102,7 +102,7 @@ const updateWorkerProfile = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized to update this profile' });
     }
 
-    const { bio, hourly_rate, years_experience, location, is_available, name, phone, avatar_url } = req.body;
+    const { bio, service_category, hourly_rate, years_experience, location, is_available, name, phone, avatar_url } = req.body;
 
     // Also update the linked users record if personal fields are provided
     if (name !== undefined || phone !== undefined || avatar_url !== undefined) {
@@ -113,7 +113,7 @@ const updateWorkerProfile = async (req, res, next) => {
       });
     }
 
-    const updated = await updateWorker(req.params.id, { bio, hourly_rate, years_experience, location, is_available });
+    const updated = await updateWorker(req.params.id, { bio, service_category: service_category ?? target.service_category, hourly_rate, years_experience, location, is_available });
 
     res.status(200).json({ success: true, worker: { ...updated, name: name ?? target.name, phone: phone ?? target.phone, avatar_url: avatar_url ?? target.avatar_url } });
   } catch (error) {

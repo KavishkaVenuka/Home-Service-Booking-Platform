@@ -79,18 +79,18 @@ const getWorkerById = async (id) => {
 /**
  * Update a worker's profile.
  * @param {string} id
- * @param {{ bio, hourly_rate, years_experience, location, is_available }} fields
+ * @param {{ bio, service_category, hourly_rate, years_experience, location, is_available }} fields
  */
 const updateWorker = async (id, fields) => {
-  const { bio, hourly_rate, years_experience, location, is_available } = fields;
+  const { bio, service_category, hourly_rate, years_experience, location, is_available } = fields;
   const sql = `
     UPDATE workers
-    SET bio = $1, hourly_rate = $2, years_experience = $3,
-        location = $4, is_available = $5, updated_at = NOW()
-    WHERE id = $6
+    SET bio = $1, service_category = $2, hourly_rate = $3, years_experience = $4,
+        location = $5, is_available = $6, updated_at = NOW()
+    WHERE id = $7
     RETURNING *
   `;
-  const { rows } = await query(sql, [bio, hourly_rate, years_experience, location, is_available, id]);
+  const { rows } = await query(sql, [bio, service_category, hourly_rate, years_experience, location, is_available, id]);
   return rows[0] || null;
 };
 

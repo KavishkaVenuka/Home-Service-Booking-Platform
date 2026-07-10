@@ -229,9 +229,10 @@ export default function AuthPage({ mode }) {
     if (!isEmailValid || !isPasswordValid) return;
     setModalStatus('loading');
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       setModalStatus('closed');
-      navigate('/workers');
+      // Send workers to their dashboard, everyone else to workers listing
+      navigate(loggedInUser?.role === 'worker' ? '/worker/dashboard' : '/workers');
     } catch (err) {
       setModalErrorMessage(err.response?.data?.message || err.message || "Login failed. Check your credentials.");
       setModalStatus('error');
@@ -291,7 +292,8 @@ export default function AuthPage({ mode }) {
     setModalStatus('closed');
     setModalErrorMessage('');
     if (currentStatus === 'success') {
-      navigate('/workers');
+      // Workers go to their dashboard, customers go to workers listing
+      navigate(role === 'worker' ? '/worker/dashboard' : '/workers');
     }
   };
 

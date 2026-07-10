@@ -23,6 +23,7 @@ export const fetchWorkerById        = (id)        => api.get(`/workers/${id}`);
 export const fetchWorkerReviews     = (id)        => api.get(`/reviews/worker/${id}`);
 export const fetchMyWorkerProfile   = ()          => api.get('/workers/me');
 export const updateMyWorkerProfile  = (id, data)  => api.put(`/workers/${id}`, data);
+export const createWorkerProfile    = (data)      => api.post('/workers', data);
 export const fetchWorkerJobBookings = ()          => api.get('/bookings/worker');
 
 // Bookings
