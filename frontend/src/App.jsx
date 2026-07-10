@@ -10,12 +10,12 @@ import RegisterPage from './pages/RegisterPage';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const isLanding = pathname === '/';
+  const hideNavbar = pathname === '/' || pathname === '/login' || pathname === '/register';
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Hide the global dark Navbar on the landing page — it has its own */}
-      {!isLanding && <Navbar />}
+      {/* Hide the global Navbar on landing and auth pages */}
+      {!hideNavbar && <Navbar />}
       <main className="flex-1">
         <Routes>
           <Route path="/"          element={<LandingPage  />} />
