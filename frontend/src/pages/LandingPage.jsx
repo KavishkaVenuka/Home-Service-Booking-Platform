@@ -30,13 +30,32 @@ const HOW_STEPS = [
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const heroRef = useRef(null);
+  const imgRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Monitor image loading to fade out loader
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      setImageLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (imageLoaded) {
+      const timer = setTimeout(() => {
+        setShowLoader(false);
+      }, 650); // Small delay to guarantee visual feedback of premium loading state
+      return () => clearTimeout(timer);
+    }
+  }, [imageLoaded]);
 
   return (
     <div className="lp-root">
@@ -106,34 +125,57 @@ export default function LandingPage() {
         </div>
 
         <div className="lp-hero__content">
-          <div className="lp-eyebrow">
-            <span className="lp-eyebrow__dot" />
-            Home Service Platform
-          </div>
+          {showLoader ? (
+            <div className="lp-hero-skeleton">
+              <div className="lp-skeleton-eyebrow lp-shimmer" />
+              <div className="lp-skeleton-title lp-shimmer" />
+              <div className="lp-skeleton-title lp-skeleton-title--short lp-shimmer" />
+              <div className="lp-skeleton-sub lp-shimmer" />
+              <div className="lp-skeleton-sub lp-skeleton-sub--short lp-shimmer" />
+              <div className="lp-skeleton-ctas">
+                <div className="lp-skeleton-btn lp-shimmer" />
+                <div className="lp-skeleton-btn lp-shimmer" />
+              </div>
+            </div>
+          ) : (
+            <div className="lp-hero-animate-in">
+              <div className="lp-eyebrow">
+                <span className="lp-eyebrow__dot" />
+                Home Service Platform
+              </div>
 
-          <h1 className="lp-hero__title">
-            <span className="lp-hero__title-nowrap">Find workers that feel</span><br />
-            <span className="lp-hero__accent lp-hero__title-nowrap">impossible to replace.</span>
-          </h1>
+              <h1 className="lp-hero__title">
+                <span className="lp-hero__title-nowrap">Find workers that feel</span><br />
+                <span className="lp-hero__accent lp-hero__title-nowrap">impossible to replace.</span>
+              </h1>
 
-          <p className="lp-hero__sub">
-            Verified, background-checked professionals for every home service.<br />
-            Plumbing, electrical, cleaning and more — booked in minutes.
-          </p>
+              <p className="lp-hero__sub">
+                Verified, background-checked professionals for every home service.<br />
+                Plumbing, electrical, cleaning and more — booked in minutes.
+              </p>
 
-          <div className="lp-cta-row">
-            <Link to="/workers" id="hero-browse-workers" className="lp-btn lp-btn--dark">
-              Browse Workers <span className="lp-btn__arrow">↗</span>
-            </Link>
-            <Link to="/register" className="lp-btn lp-btn--outline">
-              Join as a Pro <span className="lp-btn__dot" />
-            </Link>
-          </div>
+              <div className="lp-cta-row">
+                <Link to="/workers" id="hero-browse-workers" className="lp-btn lp-btn--dark">
+                  Browse Workers <span className="lp-btn__arrow">↗</span>
+                </Link>
+                <Link to="/register" className="lp-btn lp-btn--outline">
+                  Join as a Pro <span className="lp-btn__dot" />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lp-hero__img-wrap">
-          <img src={heroWorker} alt="Professional home service worker" className="lp-hero__img" />
-          <div className="lp-hero__img-glow" />
+          {showLoader && <div className="lp-skeleton-img" />}
+          <img
+            ref={imgRef}
+            src={heroWorker}
+            alt="Professional home service worker"
+            className={`lp-hero__img ${showLoader ? 'lp-hero__img--hidden' : 'lp-hero__img--visible'}`}
+            onLoad={() => setImageLoaded(true)}
+          />
+          {!showLoader && <div className="lp-hero__img-glow" />}
         </div>
 
         <div className="lp-stats-bar">
