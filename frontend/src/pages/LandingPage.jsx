@@ -266,7 +266,7 @@ export default function LandingPage() {
                   Browse Workers <span className="lp-btn__arrow">↗</span>
                 </Link>
                 <Link to="/register" className="lp-btn lp-btn--outline">
-                  Join as a Pro <span className="lp-btn__dot" />
+                  Login <span className="lp-btn__dot" />
                 </Link>
               </div>
             </div>

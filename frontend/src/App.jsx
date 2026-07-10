@@ -14,7 +14,7 @@ import UserDashboard   from './pages/UserDashboard';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const hideNavbar = ['/', '/login', '/register', '/worker/dashboard', '/services', '/about', '/contact', '/workers', '/dashboard'].includes(pathname);
+  const hideNavbar = ['/', '/login', '/register', '/worker/dashboard', '/services', '/about', '/contact', '/workers', '/dashboard'].includes(pathname) || pathname.startsWith('/book/');
 
   return (
     <div className="min-h-screen flex flex-col">

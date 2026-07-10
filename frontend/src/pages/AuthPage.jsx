@@ -162,6 +162,99 @@ const TEXT_LOOP_INTERVAL = 1.3;
 
 const DefaultLogo = () => (<div className="bg-orange-500 text-white rounded-md p-1.5 flex items-center justify-center"> <span className="text-sm font-bold">⚡</span> </div>);
 
+function SharedNavbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [dropdownOpen, setDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const handleLogout = () => { setDropdown(false); logout(); navigate('/'); };
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <header className={`lp-nav ${scrolled ? 'lp-nav--scrolled' : ''}`}>
+      <div className="lp-nav__inner">
+        <Link to="/" className="lp-logo">
+          <span className="lp-logo__icon">⚡</span>
+          <span className="lp-logo__text">Work<span className="lp-logo__accent">Hire</span></span>
+        </Link>
+
+        <nav className="lp-nav__links">
+          {['Home', 'Workers', 'Services', 'About', 'Contact'].map((l) => (
+            <Link key={l} to={l === 'Home' ? '/' : `/${l.toLowerCase()}`} className="lp-nav__link">{l}</Link>
+          ))}
+        </nav>
+
+        <div className="lp-nav__right">
+          {user ? (
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setDropdown(p => !p)}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '10px', border: 'none', background: dropdownOpen ? 'rgba(0,0,0,0.08)' : 'transparent', cursor: 'pointer' }}
+              >
+                <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '14px' }}>
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+                <span style={{ fontWeight: 600, color: '#111', fontSize: '14px' }}>{user.name?.split(' ')[0]}</span>
+                <svg style={{ width: '14px', height: '14px', color: '#888', transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {dropdownOpen && (
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: '200px', borderRadius: '14px', background: '#fff', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.14)', overflow: 'hidden', zIndex: 999 }}>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>Signed in as</p>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#111' }}>{user.name}</p>
+                  </div>
+                  <Link to={user.role === 'worker' ? '/worker/dashboard' : '/dashboard'} onClick={() => setDropdown(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', fontSize: '13px', color: '#333', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.background = '#f5f5f7'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <svg style={{ width: '15px', height: '15px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    Dashboard
+                  </Link>
+                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                    <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 16px', fontSize: '13px', color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#fff5f5'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <svg style={{ width: '15px', height: '15px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3h4a3 3 0 013 3v1" /></svg>
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/login" className="lp-btn lp-btn--dark" style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>Sign in</Link>
+          )}
+          <button className="lp-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+            <span className="lp-menu-icon">≡</span> MENU
+          </button>
+        </div>
+      </div>
+      {menuOpen && (
+        <div className="lp-mobile-menu">
+          {['/', '/workers', '/services', '/about', '/contact'].map((path, i) => (
+            <Link key={path} to={path} className="lp-mobile-link" onClick={() => setMenuOpen(false)}>
+              {['Home', 'Workers', 'Services', 'About', 'Contact'][i]}
+            </Link>
+          ))}
+        </div>
+      )}
+    </header>
+  );
+}
+
 export default function AuthPage({ mode }) {
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -340,7 +433,8 @@ export default function AuthPage({ mode }) {
   );
 
   return (
-    <div className="bg-[#f2f0eb] min-h-screen w-screen flex items-center justify-center relative overflow-x-hidden text-stone-900 font-sans p-4 md:p-8">
+    <div className="bg-[#f2f0eb] min-h-screen w-screen flex flex-col items-center justify-center relative overflow-x-hidden text-stone-900 font-sans p-4 md:p-8 pt-24">
+      <SharedNavbar />
       <style>{`
         input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none !important; } input[type="password"]::-webkit-credentials-auto-fill-button, input[type="password"]::-webkit-strong-password-auto-fill-button { display: none !important; } input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { -webkit-box-shadow: 0 0 0 30px transparent inset !important; -webkit-text-fill-color: #111 !important; background-color: transparent !important; background-clip: content-box !important; transition: background-color 5000s ease-in-out 0s !important; color: #111 !important; caret-color: #111 !important; } input:autofill { background-color: transparent !important; background-clip: content-box !important; -webkit-text-fill-color: #111 !important; color: #111 !important; } input:-internal-autofill-selected { background-color: transparent !important; background-image: none !important; color: #111 !important; -webkit-text-fill-color: #111 !important; } input:-webkit-autofill::first-line { color: #111 !important; -webkit-text-fill-color: #111 !important; }
         @property --angle-1 { syntax: "<angle>"; inherits: false; initial-value: -75deg; } @property --angle-2 { syntax: "<angle>"; inherits: false; initial-value: -45deg; }
@@ -357,30 +451,6 @@ export default function AuthPage({ mode }) {
       {/* Main Glassmorphism Wide Card Container */}
       <div className="w-full max-w-5xl min-h-[640px] bg-white/35 border border-stone-200/40 rounded-3xl backdrop-blur-2xl shadow-xl flex flex-col relative overflow-hidden z-10">
 
-        {/* Top Navigation Bar */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-stone-200/20 w-full text-stone-700 text-xs md:text-sm tracking-wide font-medium z-20">
-          <nav className="flex items-center gap-6">
-            <span className="flex items-center gap-2 mr-4 text-sm font-extrabold tracking-tight text-stone-900" style={{ fontFamily: 'Outfit' }}>
-              <DefaultLogo />
-              <span className="hidden sm:inline">WorkHire</span>
-            </span>
-            <a href="/" className="hover:text-orange-600 transition-colors text-[11px] uppercase tracking-wider font-semibold text-stone-700">Home</a>
-            <a href="/about" className="hover:text-orange-600 transition-colors text-[11px] uppercase tracking-wider font-semibold text-stone-700">About</a>
-            <a href="/blog" className="hover:text-orange-600 transition-colors text-[11px] uppercase tracking-wider font-semibold text-stone-700">Blog</a>
-            <a href="/pages" className="hover:text-orange-600 transition-colors text-[11px] uppercase tracking-wider font-semibold text-stone-700">Pages</a>
-            <a href="/contact" className="hover:text-orange-600 transition-colors text-[11px] uppercase tracking-wider font-semibold text-stone-700">Contact</a>
-          </nav>
-
-          <div className="flex items-center gap-6 text-[11px] uppercase tracking-wider font-semibold text-stone-700">
-            <button className="hover:text-orange-600 transition-colors"></button>
-            {mode === 'login' ? (
-              <Link to="/register" className="px-4 py-1.5 rounded-full border border-stone-200 hover:bg-stone-100/50 hover:border-stone-300 transition-all text-stone-950">Sign Up</Link>
-            ) : (
-              <Link to="/login" className="px-4 py-1.5 rounded-full border border-stone-200 hover:bg-stone-100/50 hover:border-stone-300 transition-all text-stone-950">Sign In</Link>
-            )}
-          </div>
-        </header>
-
         {/* Two-Column Layout */}
         <div className={`flex-grow flex flex-col ${mode === 'login' ? 'md:flex-row' : 'md:flex-row-reverse'} w-full h-full relative`}>
 
@@ -388,10 +458,6 @@ export default function AuthPage({ mode }) {
           <motion.div
             layout
             className="hidden md:flex md:w-1/2 relative items-center justify-center p-8 bg-gradient-to-br from-orange-500/[0.01] via-transparent to-purple-500/[0.01]"
-            style={{
-              borderRightWidth: mode === 'login' ? '1px' : '0px',
-              borderLeftWidth: mode === 'register' ? '1px' : '0px',
-            }}
             transition={{ type: 'spring', stiffness: 200, damping: 25 }}
           >
             <AnimatePresence mode="wait">
@@ -431,7 +497,7 @@ export default function AuthPage({ mode }) {
                   <BlurFade delay={0.2} className="text-center">
                     <p className="text-sm font-medium text-stone-600">Sign in to your WorkHire account</p>
                   </BlurFade>
-                  
+
                   <BlurFade delay={0.3} className="w-full py-2 space-y-4">
                     <div className="glass-input-wrap w-full">
                       <div className="glass-input">

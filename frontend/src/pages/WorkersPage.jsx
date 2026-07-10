@@ -134,6 +134,8 @@ function SkeletonCard() {
 
 /* ── Main Page ────────────────────────────────────────────────── */
 export default function WorkersPage() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [workers, setWorkers]   = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -142,6 +144,7 @@ export default function WorkersPage() {
   const activeCategory = searchParams.get('category') || 'All';
 
   useEffect(() => {
+    if (!user) return;
     const cat = activeCategory === 'All' ? null : activeCategory;
     setLoading(true);
     fetchWorkers(cat)
@@ -152,13 +155,75 @@ export default function WorkersPage() {
         setMock(true);
       })
       .finally(() => setLoading(false));
-  }, [activeCategory]);
+  }, [activeCategory, user]);
 
   const handleCategory = (cat) => {
     if (cat === 'All') searchParams.delete('category');
     else searchParams.set('category', cat);
     setSearchParams(searchParams);
   };
+
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f2f0eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(249,115,22,0.2)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="lp-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <SharedNavbar />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f0eb', padding: '6rem 2rem 4rem', pt: '100px' }}>
+          <div style={{
+            background: '#fff',
+            border: '1.5px solid rgba(0,0,0,0.08)',
+            borderRadius: '1.25rem',
+            padding: '40px 32px',
+            maxWidth: '420px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: '#111', margin: '0 0 10px' }}>
+              Authentication Required
+            </h2>
+            <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: 1.6, margin: '0 0 24px' }}>
+              First login to access this page.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              className="lp-btn lp-btn--dark"
+              style={{ width: '100%', padding: '12px', borderRadius: '12px', justifyContent: 'center' }}
+            >
+              Login to Continue <span style={{ marginLeft: '4px' }}>⚡</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* FOOTER */}
+        <footer className="lp-footer">
+          <div className="lp-footer__inner">
+            <div className="lp-footer__brand">
+              <span className="lp-logo__icon">⚡</span>
+              <span className="lp-logo__text">Work<span className="lp-logo__accent">Hire</span></span>
+            </div>
+            <p className="lp-footer__copy">© {new Date().getFullYear()} WorkHire. Connecting homes with trusted pros.</p>
+            <div className="lp-footer__links">
+              <Link to="/workers"  className="lp-footer__link">Workers</Link>
+              <Link to="/services" className="lp-footer__link">Services</Link>
+              <Link to="/about"    className="lp-footer__link">About</Link>
+              <Link to="/contact"  className="lp-footer__link">Contact</Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
 
   return (
     <div className="lp-root">
