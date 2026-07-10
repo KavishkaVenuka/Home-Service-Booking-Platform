@@ -5,8 +5,7 @@ import LandingPage  from './pages/LandingPage';
 import WorkersPage  from './pages/WorkersPage';
 import BookingPage  from './pages/BookingPage';
 import BookingsPage from './pages/BookingsPage';
-import LoginPage    from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import AuthPage     from './pages/AuthPage';
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -22,8 +21,8 @@ function AppShell() {
           <Route path="/workers"   element={<WorkersPage  />} />
           <Route path="/book/:workerId" element={<BookingPage />} />
           <Route path="/bookings"  element={<BookingsPage />} />
-          <Route path="/login"     element={<LoginPage    />} />
-          <Route path="/register"  element={<RegisterPage />} />
+          <Route path="/login"     element={<AuthPage mode="login"    />} />
+          <Route path="/register"  element={<AuthPage mode="register" />} />
           {/* 404 */}
           <Route path="*" element={
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
