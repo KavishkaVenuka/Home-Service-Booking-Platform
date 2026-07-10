@@ -5,11 +5,12 @@ import LandingPage  from './pages/LandingPage';
 import WorkersPage  from './pages/WorkersPage';
 import BookingPage  from './pages/BookingPage';
 import BookingsPage from './pages/BookingsPage';
-import AuthPage     from './pages/AuthPage';
+import AuthPage        from './pages/AuthPage';
+import WorkerDashboard from './pages/WorkerDashboard';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const hideNavbar = pathname === '/' || pathname === '/login' || pathname === '/register';
+  const hideNavbar = pathname === '/' || pathname === '/login' || pathname === '/register' || pathname === '/worker/dashboard';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -21,8 +22,9 @@ function AppShell() {
           <Route path="/workers"   element={<WorkersPage  />} />
           <Route path="/book/:workerId" element={<BookingPage />} />
           <Route path="/bookings"  element={<BookingsPage />} />
-          <Route path="/login"     element={<AuthPage mode="login"    />} />
-          <Route path="/register"  element={<AuthPage mode="register" />} />
+          <Route path="/login"            element={<AuthPage mode="login"    />} />
+          <Route path="/register"         element={<AuthPage mode="register" />} />
+          <Route path="/worker/dashboard" element={<WorkerDashboard />} />
           {/* 404 */}
           <Route path="*" element={
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">

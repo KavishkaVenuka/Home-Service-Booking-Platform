@@ -1,4 +1,5 @@
 const { createWorker, getAllWorkers, getWorkerById, getWorkerByUserId, updateWorker } = require('../models/Worker');
+const { updateUser } = require('../models/User');
 
 /**
  * @route   GET /api/workers
@@ -68,8 +69,25 @@ const createWorkerProfile = async (req, res, next) => {
 };
 
 /**
+ * @route   GET /api/workers/me
+ * @desc    Get the authenticated worker's own profile
+ * @access  Private (role: worker)
+ */
+const getMyProfile = async (req, res, next) => {
+  try {
+    const worker = await getWorkerByUserId(req.user.id);
+    if (!worker) {
+      return res.status(404).json({ success: false, message: 'No worker profile found for this account' });
+    }
+    res.status(200).json({ success: true, worker });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * @route   PUT /api/workers/:id
- * @desc    Update a worker profile (owner only)
+ * @desc    Update a worker profile (owner only) — also syncs name/phone/avatar_url to users table
  * @access  Private (role: worker | admin)
  */
 const updateWorkerProfile = async (req, res, next) => {
@@ -84,13 +102,23 @@ const updateWorkerProfile = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorized to update this profile' });
     }
 
-    const { bio, hourly_rate, years_experience, location, is_available } = req.body;
+    const { bio, hourly_rate, years_experience, location, is_available, name, phone, avatar_url } = req.body;
+
+    // Also update the linked users record if personal fields are provided
+    if (name !== undefined || phone !== undefined || avatar_url !== undefined) {
+      await updateUser(target.user_id, {
+        name:       name       ?? target.name,
+        phone:      phone      ?? target.phone,
+        avatar_url: avatar_url ?? target.avatar_url,
+      });
+    }
+
     const updated = await updateWorker(req.params.id, { bio, hourly_rate, years_experience, location, is_available });
 
-    res.status(200).json({ success: true, worker: updated });
+    res.status(200).json({ success: true, worker: { ...updated, name: name ?? target.name, phone: phone ?? target.phone, avatar_url: avatar_url ?? target.avatar_url } });
   } catch (error) {
     next(error);
   }
 };
 
-module.exports = { listWorkers, getWorker, createWorkerProfile, updateWorkerProfile };
+module.exports = { listWorkers, getWorker, getMyProfile, createWorkerProfile, updateWorkerProfile };

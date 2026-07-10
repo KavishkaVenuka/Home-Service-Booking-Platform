@@ -41,6 +41,14 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
+              {user.role === 'worker' && (
+                <Link
+                  to="/worker/dashboard"
+                  className="text-slate-300 hover:text-white text-sm font-medium transition-colors no-underline"
+                >
+                  Dashboard
+                </Link>
+              )}
               <span className="text-slate-400 text-sm hidden sm:block">
                 Hi, <span className="text-white font-medium">{user.name.split(' ')[0]}</span>
               </span>

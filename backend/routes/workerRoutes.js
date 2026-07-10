@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { listWorkers, getWorker, createWorkerProfile, updateWorkerProfile } = require('../controllers/workerController');
+const { listWorkers, getWorker, getMyProfile, createWorkerProfile, updateWorkerProfile } = require('../controllers/workerController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // GET  /api/workers          — list all available workers (public, filter by ?category=)
 router.get('/', listWorkers);
+
+// GET  /api/workers/me       — authenticated worker's own profile (MUST be before /:id)
+router.get('/me', protect, authorize('worker', 'admin'), getMyProfile);
 
 // GET  /api/workers/:id      — single worker profile (public)
 router.get('/:id', getWorker);

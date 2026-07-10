@@ -18,9 +18,12 @@ export const login    = (data) => api.post('/auth/login', data);
 export const getMe    = ()     => api.get('/auth/me');
 
 // Workers
-export const fetchWorkers      = (category) => api.get('/workers', { params: category ? { category } : {} });
-export const fetchWorkerById   = (id)        => api.get(`/workers/${id}`);
-export const fetchWorkerReviews = (id)       => api.get(`/reviews/worker/${id}`);
+export const fetchWorkers           = (category) => api.get('/workers', { params: category ? { category } : {} });
+export const fetchWorkerById        = (id)        => api.get(`/workers/${id}`);
+export const fetchWorkerReviews     = (id)        => api.get(`/reviews/worker/${id}`);
+export const fetchMyWorkerProfile   = ()          => api.get('/workers/me');
+export const updateMyWorkerProfile  = (id, data)  => api.put(`/workers/${id}`, data);
+export const fetchWorkerJobBookings = ()          => api.get('/bookings/worker');
 
 // Bookings
 export const createBooking      = (data) => api.post('/bookings', data);

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import heroWorker from '../assets/hero_workers.png';
 import TextPressure from '../components/TextPressure';
@@ -28,6 +29,7 @@ const HOW_STEPS = [
 ];
 
 export default function LandingPage() {
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -81,10 +83,12 @@ export default function LandingPage() {
           </nav>
 
           <div className="lp-nav__right">
-            <span className="lp-nav__location">
-              <span className="lp-location-dot" />
-              Your City
-            </span>
+            {user ? (
+              <span className="lp-nav__location">
+                <span className="lp-location-dot" />
+                <span style={{ fontWeight: 600, color: '#111' }}>{user.name?.split(' ')[0]}</span>
+              </span>
+            ) : null}
             <button className="lp-menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
               <span className="lp-menu-icon">≡</span> MENU
             </button>
