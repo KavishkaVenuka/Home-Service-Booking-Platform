@@ -10,10 +10,11 @@ import WorkerDashboard from './pages/WorkerDashboard';
 import ServicesPage    from './pages/ServicesPage';
 import AboutPage       from './pages/AboutPage';
 import ContactPage     from './pages/ContactPage';
+import UserDashboard   from './pages/UserDashboard';
 
 function AppShell() {
   const { pathname } = useLocation();
-  const hideNavbar = ['/', '/login', '/register', '/worker/dashboard', '/services', '/about', '/contact', '/workers'].includes(pathname);
+  const hideNavbar = ['/', '/login', '/register', '/worker/dashboard', '/services', '/about', '/contact', '/workers', '/dashboard'].includes(pathname);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -31,6 +32,7 @@ function AppShell() {
           <Route path="/services"        element={<ServicesPage />} />
           <Route path="/about"           element={<AboutPage    />} />
           <Route path="/contact"         element={<ContactPage  />} />
+          <Route path="/dashboard"       element={<UserDashboard />} />
           {/* 404 */}
           <Route path="*" element={
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
