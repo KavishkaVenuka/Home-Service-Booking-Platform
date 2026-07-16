@@ -84,6 +84,7 @@ terraform/override.tf
 terraform/override.tf.json
 *_override.tf
 *_override.tf.json
+terraform/terraform.tfvars
 
 # ─── GitHub Actions ───────────────────────────────────────────────────────────
 # Keep workflow files tracked — ignore any local secrets files

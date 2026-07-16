@@ -1,0 +1,55 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Clone or pull the repository
+            if [ ! -d "/home/ec2-user/Home-Service-Booking-Platform" ]; then
+              # Assuming the repository is public or uses a Deploy Key on the EC2 instance
+              git clone https://github.com/${{ github.repository }}.git /home/ec2-user/Home-Service-Booking-Platform
+              cd /home/ec2-user/Home-Service-Booking-Platform
+            else
+              cd /home/ec2-user/Home-Service-Booking-Platform
+              # Discard any local changes (like package-lock.json modifications) and pull
+              git reset --hard
+              git pull origin main
+            fi
+
+            # 2. Build the Backend
+            echo "Deploying Backend..."
+            cd /home/ec2-user/Home-Service-Booking-Platform/backend
+            npm install
+            
+            # Restart or start the backend with PM2
+            pm2 restart backend || pm2 start server.js --name backend
+            pm2 save
+
+            # 3. Build the Frontend
+            echo "Deploying Frontend..."
+            cd /home/ec2-user/Home-Service-Booking-Platform/frontend
+            npm install
+            npm run build
+
+            # 4. Update Nginx configuration
+            echo "Updating Nginx..."
+            sudo cp /home/ec2-user/Home-Service-Booking-Platform/deployment/nginx.conf /etc/nginx/conf.d/homeserve.conf
+            sudo systemctl restart nginx
+
+            echo "✅ Deployment Successful!"
