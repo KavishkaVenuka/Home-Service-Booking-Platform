@@ -42,18 +42,6 @@ variable "ssh_allowed_cidr" {
 
 # ─── RDS ──────────────────────────────────────────────────────────────────────
 
-variable "rds_instance_class" {
-  description = "RDS instance class"
-  type        = string
-  default     = "db.t3.micro"
-}
-
-variable "rds_allocated_storage" {
-  description = "Allocated storage for RDS in GB"
-  type        = number
-  default     = 20
-}
-
 variable "db_name" {
   description = "Name of the PostgreSQL database to create"
   type        = string

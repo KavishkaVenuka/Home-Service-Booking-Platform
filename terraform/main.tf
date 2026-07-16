@@ -83,20 +83,7 @@ resource "aws_subnet" "public_b" {
   tags                    = { Name = "${var.project_name}-public-b" }
 }
 
-# Private Subnets (RDS lives here — multi-AZ requires 2)
-resource "aws_subnet" "private_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.11.0/24"
-  availability_zone = "${var.aws_region}a"
-  tags              = { Name = "${var.project_name}-private-a" }
-}
 
-resource "aws_subnet" "private_b" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.12.0/24"
-  availability_zone = "${var.aws_region}b"
-  tags              = { Name = "${var.project_name}-private-b" }
-}
 
 # Route Table for public subnets
 resource "aws_route_table" "public" {
@@ -152,13 +139,7 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = [var.ssh_allowed_cidr]
   }
 
-  ingress {
-    description = "App API port"
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
 
   egress {
     from_port   = 0
@@ -170,29 +151,7 @@ resource "aws_security_group" "ec2_sg" {
   tags = { Name = "${var.project_name}-ec2-sg" }
 }
 
-# RDS Security Group: only accept connections from the EC2 instance
-resource "aws_security_group" "rds_sg" {
-  name        = "${var.project_name}-rds-sg"
-  description = "Security group for the HomeServe RDS PostgreSQL instance"
-  vpc_id      = aws_vpc.main.id
 
-  ingress {
-    description     = "PostgreSQL from EC2"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ec2_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.project_name}-rds-sg" }
-}
 
 # ─── EC2 Application Server ───────────────────────────────────────────────────
 
@@ -208,27 +167,40 @@ resource "aws_instance" "app_server" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   key_name               = aws_key_pair.deployer.key_name
 
-  # Bootstrap script: install Docker and start the application
+  # Bootstrap script: install Node.js 20, Nginx, and PostgreSQL
   user_data = base64encode(<<-EOT
     #!/bin/bash
     set -e
     dnf update -y
-    dnf install -y docker git
-    systemctl enable --now docker
-    usermod -aG docker ec2-user
+    dnf install -y git jq curl
 
-    # Install Docker Compose v2
-    mkdir -p /usr/local/lib/docker/cli-plugins
-    curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-      -o /usr/local/lib/docker/cli-plugins/docker-compose
-    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+    # Install Node.js 20
+    curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+    dnf install -y nodejs
+    npm install -g pm2
 
-    echo "✅ Docker and Docker Compose installed"
+    # Install and configure Nginx
+    dnf install -y nginx
+    systemctl enable --now nginx
+
+    # Install and configure PostgreSQL 15 (default in AL2023)
+    dnf install -y postgresql15 postgresql15-server
+    postgresql-setup --initdb
+    systemctl enable --now postgresql
+
+    # Wait for postgres to start
+    sleep 5
+
+    # Create the database and user using Terraform variables
+    su - postgres -c "psql -c \"CREATE USER \\\"${var.db_username}\\\" WITH PASSWORD '${var.db_password}';\""
+    su - postgres -c "psql -c \"CREATE DATABASE \\\"${var.db_name}\\\" OWNER \\\"${var.db_username}\\\";\""
+
+    echo "✅ Node.js 20, PM2, Nginx, and PostgreSQL installed and configured"
   EOT
   )
 
   root_block_device {
-    volume_size           = 20
+    volume_size           = 30
     volume_type           = "gp3"
     delete_on_termination = true
     encrypted             = true
@@ -244,44 +216,3 @@ resource "aws_eip" "app_server" {
   tags     = { Name = "${var.project_name}-eip" }
 }
 
-# ─── RDS PostgreSQL Database ──────────────────────────────────────────────────
-
-resource "aws_db_subnet_group" "main" {
-  name       = "${var.project_name}-db-subnet-group"
-  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
-  tags       = { Name = "${var.project_name}-db-subnet-group" }
-}
-
-resource "aws_db_instance" "postgres" {
-  identifier        = "${var.project_name}-postgres"
-  engine            = "postgres"
-  engine_version    = "16.3"
-  instance_class    = var.rds_instance_class
-  allocated_storage = var.rds_allocated_storage
-  storage_type      = "gp3"
-  storage_encrypted = true
-
-  db_name  = var.db_name
-  username = var.db_username
-  password = var.db_password
-
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-
-  # For production, set to true to enable multi-AZ
-  multi_az            = false
-  publicly_accessible = false
-
-  # Maintenance and backup
-  backup_retention_period   = 7
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "Mon:04:00-Mon:05:00"
-  auto_minor_version_upgrade = true
-
-  # Prevent accidental deletion in production
-  deletion_protection     = false   # Set to true in production!
-  skip_final_snapshot     = true    # Set to false in production!
-  # final_snapshot_identifier = "${var.project_name}-final-snapshot"
-
-  tags = { Name = "${var.project_name}-rds" }
-}

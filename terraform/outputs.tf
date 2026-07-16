@@ -12,21 +12,6 @@ output "ec2_public_dns" {
   value       = aws_instance.app_server.public_dns
 }
 
-output "rds_endpoint" {
-  description = "Connection endpoint for the RDS PostgreSQL instance (host:port)"
-  value       = aws_db_instance.postgres.endpoint
-}
-
-output "rds_port" {
-  description = "Port of the RDS PostgreSQL instance"
-  value       = aws_db_instance.postgres.port
-}
-
-output "rds_db_name" {
-  description = "Name of the PostgreSQL database"
-  value       = aws_db_instance.postgres.db_name
-}
-
 output "vpc_id" {
   description = "ID of the created VPC"
   value       = aws_vpc.main.id
