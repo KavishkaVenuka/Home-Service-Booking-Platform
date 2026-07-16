@@ -44,8 +44,10 @@ jobs:
             npm install
             npm run build
 
-            # 3. Update Nginx configuration
-            echo "Updating Nginx..."
+            # 3. Update Nginx configuration and fix permissions
+            echo "Updating Nginx and fixing permissions..."
+            sudo chmod +x /home/ec2-user
+            sudo chmod -R a+rx /home/ec2-user/Home-Service-Booking-Platform/frontend/dist
             sudo cp /home/ec2-user/Home-Service-Booking-Platform/deployment/nginx.conf /etc/nginx/conf.d/homeserve.conf
             sudo systemctl restart nginx
 
